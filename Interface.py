@@ -1,8 +1,7 @@
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from tkinter import *
-from tkinter import ttk, colorchooser, filedialog
+import tkinter as tk
+from tkinter import ttk
 from PIL import Image, ImageTk, ImageGrab
-import Resize as res
 import cv2
 import numpy as np
 import CycleGAN as cc
@@ -26,7 +25,7 @@ class main:
         self.isPen = True
         self.penwidth = 3
         self.drawWidgets()
-        self.c.bind("<B1-Motion>", self.paint)  # drwaing the line
+        self.c.bind("<B1-Motion>", self.paint)  # desenha a linha quando preciona o mouse
         self.c.bind("<ButtonRelease-1>", self.reset)
 
     def paint(self, e):
@@ -39,7 +38,7 @@ class main:
                     e.y,
                     width=self.penwidth,
                     fill=self.color_fg,
-                    capstyle=ROUND,
+                    capstyle=tk.ROUND,
                     smooth=True,
                 )
             else:
@@ -50,28 +49,28 @@ class main:
                     e.y,
                     width=self.penwidth,
                     fill=self.color_bg,
-                    capstyle=ROUND,
+                    capstyle=tk.ROUND,
                     smooth=True,
                 )
 
         self.old_x = e.x
         self.old_y = e.y
 
-    def reset(self, e):  # reseting or cleaning the canvas
+    def reset(self, e):  # limpa o canvas
         self.old_x = None
         self.old_y = None
 
-    def changeW(self, e):  # change Width of pen through slider
+    def changeW(self, e):  #muda o tamanho da caneta
         self.penwidth = e
 
     def clear(self):
-        self.c.delete(ALL)
+        self.c.delete(tk.ALL)
 
-    def change_fg(self):  # changing the pen color
-        self.color_fg = colorchooser.askcolor(color=self.color_fg)[1]
+    def change_fg(self):  # muda a cor da caneta
+        self.color_fg = tk.colorchooser.askcolor(color=self.color_fg)[1]
 
-    def change_bg(self):  # changing the background color canvas
-        self.color_bg = colorchooser.askcolor(color=self.color_bg)[1]
+    def change_bg(self):  # muda a cor do plano de fundo
+        self.color_bg = tk.colorchooser.askcolor(color=self.color_bg)[1]
         self.c["bg"] = self.color_bg
 
     def selectPen(self):
@@ -79,12 +78,30 @@ class main:
 
     def selectEraser(self):
         self.isPen = False
+        
+    def make_square(self, im, sqr_size, fill_color=[0, 0, 0]):
+        y, x = im.shape[0:2]
+        if y > sqr_size or x > sqr_size:
+            if y > x:
+                div = sqr_size / y
+                y *= div
+                x *= div
+            else:
+                div = sqr_size / x
+                y *= div
+                x *= div
+        size = max(sqr_size, x, y)
+        add_x = int((size - x)/2)
+        add_y = int((size - y)/2)
+        im = cv2.resize(im, (int(x), int(y)))
+        new_im = cv2.copyMakeBorder(
+            im, add_y, add_y, add_x, add_x, cv2.BORDER_CONSTANT, value=fill_color)
+        return new_im
 
     def uploadImg(self):
-        fileImg = filedialog.askopenfilename()
-        # self.img = Image.open(self.file)
+        fileImg = tk.filedialog.askopenfilename()
         img = cv2.imread(fileImg)
-        img = res.make_square(img, 256)
+        img = self.make_square(img, 256)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img)
         self.c.image = ImageTk.PhotoImage(img_pil)
@@ -103,7 +120,7 @@ class main:
         self.widgetsNextStep()
 
     def drawWidgets(self):
-        self.controls = Frame(self.master, padx=5, pady=5)
+        self.controls = tk.Frame(self.master, padx=5, pady=5)
 
         self.butUp = ttk.Button(self.controls)
         self.butUp["text"] = "Subir Imagem"
@@ -117,23 +134,23 @@ class main:
         self.butNext["command"] = self.nextStep
         self.butNext.grid(row=1, column=1)
 
-        Label(self.controls, text="Tamanho:", font=(
+        tk.Label(self.controls, text="Tamanho:", font=(
             "arial 18")).grid(row=0, column=0)
         self.slider = ttk.Scale(
-            self.controls, from_=1, to=10, command=self.changeW, orient=HORIZONTAL
+            self.controls, from_=1, to=10, command=self.changeW, orient=tk.HORIZONTAL
         )
         self.slider.set(self.penwidth)
         self.slider.grid(row=0, column=1, ipadx=30)
-        self.controls.pack(side=LEFT)
+        self.controls.pack(side=tk.LEFT)
 
-        self.c = Canvas(self.master, width=256, height=256, bg=self.color_bg,)
-        self.c.pack(fill=BOTH, expand=True)
+        self.c = tk.Canvas(self.master, width=256, height=256, bg=self.color_bg,)
+        self.c.pack(fill=tk.BOTH, expand=True)
 
-        self.menu = Menu(self.master)
+        self.menu = tk.Menu(self.master)
         self.master.config(menu=self.menu)
-        colormenu = Menu(self.menu)
-        optionmenu = Menu(self.menu)
-        toolmenu = Menu(self.menu)
+        colormenu = tk.Menu(self.menu)
+        optionmenu = tk.Menu(self.menu)
+        toolmenu = tk.Menu(self.menu)
 
         self.menu.add_cascade(label="Cores", menu=colormenu)
         colormenu.add_command(label="Cor da Caneta", command=self.change_fg)
@@ -151,29 +168,8 @@ class main:
 
         self.cycle = cc.CycleGAN(True)
 
-    # def carregarImg(self, r, c):
-    #     plt.pyplot.close("all")
-    #     if r == 0:
-    #         self.canvas = self.imgs[("photo_"+str(r*5+c))]["photo"]
-    #         self.canvas.get_tk_widget().grid(row=r, column=c)
-    #     else:
-    #         self.canvas = self.imgs[("photo_"+str((r-1)*5+c))]["photo"].get_tk_widget()
-    #         self.canvas.grid(row=r, column=c)
-
-    # def updateWeights(self, e, maxInd, indexMax):
-    #     self.ww[maxInd][indexMax] = e
-    #     self.cycle.generator_photo.set_weights(self.ww)
-
-    #     # self.canvas.get_tk_widget().destroy()
-
-    #     # plt.pyplot.close("all")
-    #     self.photo = self.cycle.train(draw=self.npImg)
-    #     self.carregarImg(0, 0)
-
+    
     def NextGen(self):
-        # for child in self.photos.winfo_children():
-        #     child.destroy()
-
         points = []
         for i in range(10):
             points.append(int(self.imgs[("photo_"+str(i))]["points"]["text"]))
@@ -181,8 +177,9 @@ class main:
 
         matingPool = []
         for i in range(10):
-            for _ in range((int(int(self.imgs[("photo_"+str(i))]["points"]["text"]) / int(self.imgs[("photo_"+str(better))]["points"]["text"]) * 1000)) + 1):
-                matingPool.append(i)
+            if i != better:
+                for _ in range((int(int(self.imgs[("photo_"+str(i))]["points"]["text"]) / int(self.imgs[("photo_"+str(better))]["points"]["text"]) * 1000)) + 1):
+                    matingPool.append(i)
 
         matingPool = np.array(matingPool)
 
@@ -242,10 +239,10 @@ class main:
 
                 root.update()
 
-        self.photos.pack(side=LEFT)
+        self.photos.pack(side=tk.LEFT)
 
     def widgetsNextStep(self):
-        self.photos = Frame(self.master, padx=10, pady=20)
+        self.photos = tk.Frame(self.master, padx=10, pady=20)
 
         self.imgs = {}
 
@@ -283,14 +280,14 @@ class main:
 
                 if r == 0:
                     self.imgs[("photo_"+str(r*5+c))] = tmpDict
-                    self.imgs[("photo_"+str(r*5+c))]["points"] = Label(self.photos, text="0", font=("arial 10"))
+                    self.imgs[("photo_"+str(r*5+c))]["points"] = tk.Label(self.photos, text="0", font=("arial 10"))
 
                     self.imgs[("photo_"+str(r*5+c))]["photo"].get_tk_widget().grid(row=r, column=c)
                 if r == 1:
                     self.imgs[("photo_"+str((r-1)*5+c))]["points"].grid(row=r, column=c)
                 if r == 2:
                     self.imgs[("photo_"+str((r-1)*5+c))] = tmpDict
-                    self.imgs[("photo_"+str((r-1)*5+c))]["points"] = Label(self.photos, text="0", font=("arial 10"))
+                    self.imgs[("photo_"+str((r-1)*5+c))]["points"] = tk.Label(self.photos, text="0", font=("arial 10"))
 
                     self.imgs[("photo_"+str((r-1)*5+c))]["photo"].get_tk_widget().grid(row=r, column=c)
                 if r == 3:
@@ -298,7 +295,7 @@ class main:
 
                 root.update()
 
-        self.photos.pack(side=LEFT)
+        self.photos.pack(side=tk.LEFT)
 
         while not exitFlag:
             try:
@@ -316,82 +313,13 @@ class main:
             except Exception as e:
                 print(e)
 
-
-
-        # tfVars = self.cycle.generator_photo.trainable_variables
-        # i = 0
-        # for tfVar in tfVars:
-        #     x = tfVar.numpy()
-        #     xMax = np.amax(x)
-        #     indexMax = np.where(x == xMax)
-        #     x = x * -1
-        #     # Label(self.photos, text=indexMax, font=("arial 10")).grid(row=0, column=i)
-        #     self.cycle.generator_photo.get_layer("gen_photo_01").trainable_variables = tf.Variable(x)
-        #     i += 1
-
-        # Usando Scales:
-
-        # self.photo = self.cycle.train(draw=self.npImg)
-        # self.carregarImg(0, 0)
-
-        # self.ww = np.array(self.cycle.generator_photo.get_weights())
-
-        # maxes = []
-        # maxesIndex = []
-
-        # for w in range(len(self.ww)):
-        #     max1 = self.ww[w].max()
-        #     maxes.append(max1)
-        #     maxIndex = np.where(self.ww[w] == max1)
-        #     maxesIndex.append(maxIndex)
-
-        # maxes = np.array(maxes)
-        # maxesIndex = np.array(maxesIndex)
-
-        # r = 0
-        # c = 1
-        # sliders = {}
-        # for m in range(len(maxes)):
-        #     maxMax = maxes.max()
-        #     maxInd = np.where(maxes == maxMax)[0][0]
-        #     maxIndex = maxesIndex[maxInd]
-
-        #     c += 1
-        #     sliders[m] = ttk.Scale(self.photos, from_=0, to=maxMax*3,
-        #                                   command=lambda e: self.updateWeights(e, maxInd, maxIndex), orient=HORIZONTAL)
-        #     sliders[m].set(maxMax)
-        #     sliders[m].grid(row=r, column=c, ipadx=50)
-
-        #     if c % 4 == 0:
-        #         c = 1
-        #         r += 1
-
-        #     maxes[maxInd] = -inf
-
-        # self.numImgs = 6
-        # self.imgs = {}
-        # i = 0
-        # for r in range(int(self.numImgs / 2)):
-        #     for c in range(int(self.numImgs / 2)):
-        #         key = "img" + str(i)
-        #         self.imgs[key] = {"pontos": 0, "img": None, "row": r, "column": c, "panel": None}
-        #         i +=1
-
-        # for n in range(self.numImgs):
-        #     photo = cycle.train(draw = img)
-        #     key = "img" + str(n)
-        #     self.imgs[key]["img"] = ImageTk.PhotoImage(photo)
-        #     Label(self.photos, image  = self.imgs[key]["img"]).grid(row=self.imgs[key]["row"], column=self.imgs[key]["column"])
-
 def on_quit():
     global exitFlag
     exitFlag = True
     root.quit()
 
-
-
 if __name__ == "__main__":
-    root = Tk()
+    root = tk.Tk()
     main(root)
     root.title("Teste")
     root.protocol("WM_DELETE_WINDOW", on_quit)
