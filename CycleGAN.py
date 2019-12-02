@@ -418,8 +418,8 @@ class CycleGAN():
         plt.imshow(prediction[0] * 0.5 + 0.5)
         plt.axis('off')
 
-        return fig
         # plt.savefig('./imgs/image_at_epoch_{:04d}.png'.format(epoch))
+        return fig
 
     def train_step(self, real_photo, real_draw):
         # persistent is set to True because the tape is used more than once to calculate the gradients.
@@ -493,7 +493,7 @@ class CycleGAN():
             if np.all(draw) == None:
                 train_photos, test_photos, train_draws, test_draws = self.load_images(self.photo_dir, self.draw_dir)
                 sample_draw = next(iter(test_draws))
-                photo = self.generate_images(self.generator_photo, sample_draw, 0)
+                photo = self.generate_images(self.generator_photo, sample_draw, epochs)
             else:
                 tfImg = tf.data.Dataset.from_tensors(tf.convert_to_tensor(draw))
                 label = tf.data.Dataset.from_tensors(tf.convert_to_tensor([0]))
@@ -503,7 +503,7 @@ class CycleGAN():
                 self.preprocess_image_test, num_parallel_calls=self.AUTOTUNE).cache().shuffle( self.BUFFER_SIZE).batch(1)
 
                 drawIter = next(iter(imgDS))
-                photo = self.generate_images(self.generator_photo, drawIter, 0)
+                photo = self.generate_images(self.generator_photo, drawIter, epochs)
 
             return photo
 

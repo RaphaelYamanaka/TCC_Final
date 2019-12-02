@@ -215,14 +215,14 @@ class main:
                             indexMax = np.where(ww[w2] == max1)
 
                             if max1 >= 0:
-                                ww[w2][indexMax] = max1 * np.random.rand()
+                                ww[w2][indexMax] = max1 * (np.random.rand() + 0.01)
                             else:
-                                ww[w2][indexMax] = max1 * -np.random.rand()
+                                ww[w2][indexMax] = max1 * -(np.random.rand() + 0.01)
 
                 if r == 0:
                     self.imgs[("photo_"+str(r*5+c))]["DNA"] = ww
                     self.cycle.generator_photo.set_weights(self.imgs[("photo_"+str(r*5+c))]["DNA"])
-                    self.photo = self.cycle.train(draw=self.npImg)
+                    self.photo = self.cycle.train(epochs=(r*5+c), draw=self.npImg)
                     self.imgs[("photo_"+str(r*5+c))]["photo"] = FigureCanvasTkAgg(self.photo, self.photos)
                     self.imgs[("photo_"+str(r*5+c))]["points"]["text"] = 0
 
@@ -231,7 +231,7 @@ class main:
                 if r == 2:
                     self.imgs[("photo_"+str((r-1)*5+c))]["DNA"] = ww
                     self.cycle.generator_photo.set_weights(self.imgs[("photo_"+str((r-1)*5+c))]["DNA"])
-                    self.photo = self.cycle.train(draw=self.npImg)
+                    self.photo = self.cycle.train(epochs=((r-1)*5+c), draw=self.npImg)
                     self.imgs[("photo_"+str((r-1)*5+c))]["photo"] = FigureCanvasTkAgg(self.photo, self.photos)
                     self.imgs[("photo_"+str((r-1)*5+c))]["points"]["text"] = 0
 
